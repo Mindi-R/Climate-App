@@ -1,16 +1,10 @@
-import { View, Text, SafeAreaView, Image, StyleSheet } from 'react-native'
-import React from 'react'
-import { StatusBar } from 'expo-status-bar'
+import { StatusBar } from "expo-status-bar";
+import { View, SafeAreaView, StyleSheet,Text } from "react-native";
+import AppNavigation from "./Navigation/appNavigation";
 
-export default function  HomeScreen() {
+export default function App() {
   return (
-    <View className="flex-1 relative">
-      <StatusBar style="light"/>
-      <Image
-        blurRadius={70} 
-        source={require('./assets/bg.png')} 
-        className="absolute w-full h-full"
-      />
-    </View>
+    <AppNavigation />
   )
 }
+
