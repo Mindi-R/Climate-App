@@ -6,12 +6,16 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import React, { useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { theme } from "../theme/theme.js";
 
-import { MagnifyingGlassIcon } from "react-native-heroicons/outline";
+import {
+  CalendarDaysIcon,
+  MagnifyingGlassIcon,
+} from "react-native-heroicons/outline";
 import { MapPinIcon } from "react-native-heroicons/solid";
 
 export default function HomeScreen() {
@@ -124,6 +128,109 @@ export default function HomeScreen() {
           </View>
 
           {/*Forecast Section for the next days*/}
+          <View style={styles.dailyForecastContainer}>
+            <View style={styles.forecastHeader}>
+              <CalendarDaysIcon size="22" color="white" />
+              <Text style={styles.forecastHeaderText}>Daily Forecast</Text>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.scrollViewContent}
+            >
+              <View
+                style={[
+                  styles.forecastCard,
+                  { backgroundColor: theme.bgwhite(0.15) },
+                ]}
+              >
+                <Image
+                  source={require("../assets/images/heavyrain.png")}
+                  style={styles.forecastIcon}
+                />
+                <Text style={styles.dayText}>Monday</Text>
+                <Text style={styles.tempText}>13°</Text>
+              </View>
+              <View
+                style={[
+                  styles.forecastCard,
+                  { backgroundColor: theme.bgwhite(0.15) },
+                ]}
+              >
+                <Image
+                  source={require("../assets/images/heavyrain.png")}
+                  style={styles.forecastIcon}
+                />
+                <Text style={styles.dayText}>Tuesday</Text>
+                <Text style={styles.tempText}>13°</Text>
+              </View>
+              <View
+                style={[
+                  styles.forecastCard,
+                  { backgroundColor: theme.bgwhite(0.15) },
+                ]}
+              >
+                <Image
+                  source={require("../assets/images/heavyrain.png")}
+                  style={styles.forecastIcon}
+                />
+                <Text style={styles.dayText}>Wednesday</Text>
+                <Text style={styles.tempText}>13°</Text>
+              </View>
+              <View
+                style={[
+                  styles.forecastCard,
+                  { backgroundColor: theme.bgwhite(0.15) },
+                ]}
+              >
+                <Image
+                  source={require("../assets/images/heavyrain.png")}
+                  style={styles.forecastIcon}
+                />
+                <Text style={styles.dayText}>Thursday</Text>
+                <Text style={styles.tempText}>13°</Text>
+              </View>
+              <View
+                style={[
+                  styles.forecastCard,
+                  { backgroundColor: theme.bgwhite(0.15) },
+                ]}
+              >
+                <Image
+                  source={require("../assets/images/heavyrain.png")}
+                  style={styles.forecastIcon}
+                />
+                <Text style={styles.dayText}>Friday</Text>
+                <Text style={styles.tempText}>13°</Text>
+              </View>
+              <View
+                style={[
+                  styles.forecastCard,
+                  { backgroundColor: theme.bgwhite(0.15) },
+                ]}
+              >
+                <Image
+                  source={require("../assets/images/heavyrain.png")}
+                  style={styles.forecastIcon}
+                />
+                <Text style={styles.dayText}>Saturday</Text>
+                <Text style={styles.tempText}>13°</Text>
+              </View>
+              <View
+                style={[
+                  styles.forecastCard,
+                  { backgroundColor: theme.bgwhite(0.15) },
+                ]}
+              >
+                <Image
+                  source={require("../assets/images/heavyrain.png")}
+                  style={styles.forecastIcon}
+                />
+                <Text style={styles.dayText}>Sunday</Text>
+                <Text style={styles.tempText}>13°</Text>
+              </View>
+            </ScrollView>
+          </View>
         </View>
       </SafeAreaView>
     </View>
@@ -272,5 +379,45 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "600",
     fontSize: 16,
+  },
+  dailyForecastContainer: {
+    marginBottom: 8,
+  },
+  forecastHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 20,
+    marginBottom: 12,
+  },
+  forecastHeaderText: {
+    color: "white",
+    fontSize: 16,
+    marginLeft: 8,
+  },
+  scrollViewContent: {
+    paddingHorizontal: 15,
+  },
+  forecastCard: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: 96, // w-24 equivalent (24 * 4 = 96px)
+    borderRadius: 24, // rounded-3xl
+    paddingVertical: 12, // py-3
+    marginRight: 16, // mr-4
+  },
+  forecastIcon: {
+    width: 44, // w-11 equivalent (11 * 4 = 44px)
+    height: 44, // h-11 equivalent
+    marginBottom: 4,
+  },
+  dayText: {
+    color: "white",
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  tempText: {
+    color: "white",
+    fontSize: 20, // text-xl
+    fontWeight: "600",
   },
 });
