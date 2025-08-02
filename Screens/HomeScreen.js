@@ -8,9 +8,11 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { theme } from "../theme/theme.js";
+import { debounce } from "lodash";
+import { fetchLocations, fetchWeatherForecast } from "../api/weather.js";
 
 import {
   CalendarDaysIcon,
@@ -20,7 +22,67 @@ import { MapPinIcon } from "react-native-heroicons/solid";
 
 export default function HomeScreen() {
   const [showSearch, toggleSearch] = useState(false);
-  const [location, setLocation] = useState([1, 2, 3]); // Example state for location, replace with actual logic
+  const [locations, setLocations] = useState([]);
+  const [weather, setWeather] = useState({
+    name: "London",
+    country: "United Kingdom",
+    temperature: "23",
+    condition: "Partly Cloudy",
+  });
+
+  const handleSearch = (value) => {
+    console.log("Searching for:", value); // Debug log
+    //fetch locations based on the search value
+    if (value.length > 2) {
+      fetchLocations({ cityName: value })
+        .then((data) => {
+          console.log("got locations", data);
+          setLocations(data);
+        })
+        .catch((error) => {
+          console.error("Search error:", error);
+          setLocations([]);
+        });
+    } else {
+      setLocations([]);
+    }
+  };
+
+  const handleLocation = (location) => {
+    console.log("Selected location:", location);
+    setLocations([]);
+    toggleSearch(false);
+
+    // Update weather state with selected location
+    setWeather({
+      name: location.name,
+      country: location.country,
+      temperature: "23", // Will be updated with real data
+      condition: "Partly Cloudy", // Will be updated with real data
+    });
+
+    fetchWeatherForecast({
+      cityName: location.name,
+      days: "7",
+    })
+      .then((data) => {
+        console.log("Weather forecast data:", data);
+        // Update weather state with real data if available
+        if (data && data.current) {
+          setWeather((prev) => ({
+            ...prev,
+            temperature: Math.round(data.current.temp_c).toString(),
+            condition: data.current.condition.text,
+          }));
+        }
+      })
+      .catch((error) => {
+        console.error("Weather fetch error:", error);
+      });
+  };
+
+  const handleTextDebounce = useCallback(debounce(handleSearch, 1200), []);
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -44,6 +106,7 @@ export default function HomeScreen() {
           >
             {showSearch ? (
               <TextInput
+                onChangeText={handleTextDebounce}
                 placeholder="Search City"
                 placeholderTextColor={"lightgrey"}
                 style={styles.textInput}
@@ -56,12 +119,13 @@ export default function HomeScreen() {
               <MagnifyingGlassIcon color="white" size={24} />
             </TouchableOpacity>
           </View>
-          {location.length > 0 && showSearch ? (
+          {locations.length > 0 && showSearch ? (
             <View style={styles.dropdown}>
-              {location.map((loc, index) => {
-                let showBorder = index + 1 != location.length;
+              {locations.map((loc, index) => {
+                let showBorder = index + 1 != locations.length;
                 return (
                   <TouchableOpacity
+                    onPress={() => handleLocation(loc)}
                     key={index}
                     style={[
                       styles.locationItem,
@@ -70,7 +134,7 @@ export default function HomeScreen() {
                   >
                     <MapPinIcon color="black" size={20} />
                     <Text style={styles.locationText}>
-                      London,United Kingdom
+                      {loc?.name}, {loc?.country}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -82,8 +146,8 @@ export default function HomeScreen() {
         {/*Forecast Section*/}
         <View style={styles.forecastContainer}>
           <View style={styles.locationContainer}>
-            <Text style={styles.cityName}>London,</Text>
-            <Text style={styles.countryName}>United Kingdom</Text>
+            <Text style={styles.cityName}>{weather?.name},</Text>
+            <Text style={styles.countryName}>{weather?.country}</Text>
           </View>
 
           {/*Weather Image*/}
@@ -96,8 +160,8 @@ export default function HomeScreen() {
 
           {/*Degree Celsius*/}
           <View style={styles.temperatureContainer}>
-            <Text style={styles.temperature}>23°</Text>
-            <Text style={styles.weatherCondition}>Partly Cloudy</Text>
+            <Text style={styles.temperature}>{weather?.temperature}°</Text>
+            <Text style={styles.weatherCondition}>{weather?.condition}</Text>
           </View>
 
           {/*Other Stats*/}
@@ -251,7 +315,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   searchContainer: {
-    height: "7%",
+    height: "8%",
     marginHorizontal: 16,
     position: "relative",
     zIndex: 50,
@@ -260,9 +324,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-end",
-    borderRadius: 50,
-    paddingHorizontal: 16,
-    paddingVertical: 2,
+    borderRadius: 32,
+    paddingHorizontal: 12,
+    paddingVertical: 1,
   },
   textInput: {
     paddingLeft: 24,
