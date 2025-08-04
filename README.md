@@ -1,6 +1,6 @@
 # Climate App 🌤️
 
-A beautiful and modern weather application built with React Native and Expo that provides real-time weather information and 7-day forecasts for cities worldwide.
+A modern weather application built with React Native and Expo that provides real-time weather information and 7-day forecasts for cities worldwide.
 
 ## 📱 Features
 
