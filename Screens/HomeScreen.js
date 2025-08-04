@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { theme } from "../theme/theme.js";
 import { debounce } from "lodash";
@@ -19,24 +19,22 @@ import {
   MagnifyingGlassIcon,
 } from "react-native-heroicons/outline";
 import { MapPinIcon } from "react-native-heroicons/solid";
+import { weatherImages } from "../constants/index.js";
+import * as Progress from "react-native-progress";
 
 export default function HomeScreen() {
   const [showSearch, toggleSearch] = useState(false);
   const [locations, setLocations] = useState([]);
-  const [weather, setWeather] = useState({
-    name: "London",
-    country: "United Kingdom",
-    temperature: "23",
-    condition: "Partly Cloudy",
-  });
+  const [weather, setWeather] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const handleSearch = (value) => {
-    console.log("Searching for:", value); // Debug log
+    //console.log("Searching for:", value);
     //fetch locations based on the search value
     if (value.length > 2) {
       fetchLocations({ cityName: value })
         .then((data) => {
-          console.log("got locations", data);
+          //console.log("got locations", data);
           setLocations(data);
         })
         .catch((error) => {
@@ -49,39 +47,49 @@ export default function HomeScreen() {
   };
 
   const handleLocation = (location) => {
-    console.log("Selected location:", location);
+    //console.log("Selected location:", location);
     setLocations([]);
     toggleSearch(false);
-
-    // Update weather state with selected location
-    setWeather({
-      name: location.name,
-      country: location.country,
-      temperature: "23", // Will be updated with real data
-      condition: "Partly Cloudy", // Will be updated with real data
-    });
+    setLoading(true);
 
     fetchWeatherForecast({
       cityName: location.name,
       days: "7",
     })
       .then((data) => {
-        console.log("Weather forecast data:", data);
-        // Update weather state with real data if available
-        if (data && data.current) {
-          setWeather((prev) => ({
-            ...prev,
-            temperature: Math.round(data.current.temp_c).toString(),
-            condition: data.current.condition.text,
-          }));
+        if (data) {
+          setWeather(data);
+          setLoading(false);
         }
       })
       .catch((error) => {
         console.error("Weather fetch error:", error);
+        setLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    fetchMyWeatherData();
+  }, []);
+
+  const fetchMyWeatherData = async () => {
+    fetchWeatherForecast({
+      cityName: "Colombo",
+      days: "7",
+    })
+      .then((data) => {
+        setWeather(data);
+        setLoading(false); // Set loading to false when data is loaded
+      })
+      .catch((error) => {
+        console.error("Error fetching initial weather:", error);
+        setLoading(false); // Also set loading to false on error
       });
   };
 
   const handleTextDebounce = useCallback(debounce(handleSearch, 1200), []);
+
+  const { current, location } = weather;
 
   return (
     <View style={styles.container}>
@@ -91,212 +99,165 @@ export default function HomeScreen() {
         source={require("../assets/images/bg.png")}
         style={styles.backgroundImage}
       />
-      <SafeAreaView style={styles.safeArea}>
-        {/*Search Section*/}
-        <View style={styles.searchContainer}>
-          <View
-            style={[
-              styles.searchBox,
-              {
-                backgroundColor: showSearch
-                  ? theme.bgwhite(0.2)
-                  : "transparent",
-              },
-            ]}
-          >
-            {showSearch ? (
-              <TextInput
-                onChangeText={handleTextDebounce}
-                placeholder="Search City"
-                placeholderTextColor={"lightgrey"}
-                style={styles.textInput}
-              />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <Progress.CircleSnail thickness={10} size={140} color="#0bb3b2" />
+        </View>
+      ) : (
+        <SafeAreaView style={styles.safeArea}>
+          {/*Search Section*/}
+          <View style={styles.searchContainer}>
+            <View
+              style={[
+                styles.searchBox,
+                {
+                  backgroundColor: showSearch
+                    ? theme.bgwhite(0.2)
+                    : "transparent",
+                },
+              ]}
+            >
+              {showSearch ? (
+                <TextInput
+                  onChangeText={handleTextDebounce}
+                  placeholder="Search City"
+                  placeholderTextColor={"lightgrey"}
+                  style={styles.textInput}
+                />
+              ) : null}
+              <TouchableOpacity
+                onPress={() => toggleSearch(!showSearch)}
+                style={styles.searchButton}
+              >
+                <MagnifyingGlassIcon color="white" size={24} />
+              </TouchableOpacity>
+            </View>
+            {locations.length > 0 && showSearch ? (
+              <View style={styles.dropdown}>
+                {locations.map((loc, index) => {
+                  let showBorder = index + 1 != locations.length;
+                  return (
+                    <TouchableOpacity
+                      onPress={() => handleLocation(loc)}
+                      key={index}
+                      style={[
+                        styles.locationItem,
+                        showBorder && styles.locationItemBorder,
+                      ]}
+                    >
+                      <MapPinIcon color="black" size={20} />
+                      <Text style={styles.locationText}>
+                        {loc?.name}, {loc?.country}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             ) : null}
-            <TouchableOpacity
-              onPress={() => toggleSearch(!showSearch)}
-              style={styles.searchButton}
-            >
-              <MagnifyingGlassIcon color="white" size={24} />
-            </TouchableOpacity>
           </View>
-          {locations.length > 0 && showSearch ? (
-            <View style={styles.dropdown}>
-              {locations.map((loc, index) => {
-                let showBorder = index + 1 != locations.length;
-                return (
-                  <TouchableOpacity
-                    onPress={() => handleLocation(loc)}
-                    key={index}
-                    style={[
-                      styles.locationItem,
-                      showBorder && styles.locationItemBorder,
-                    ]}
-                  >
-                    <MapPinIcon color="black" size={20} />
-                    <Text style={styles.locationText}>
-                      {loc?.name}, {loc?.country}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+
+          {/*Forecast Section*/}
+          <View style={styles.forecastContainer}>
+            <View style={styles.locationContainer}>
+              <Text style={styles.cityName}>{location?.name},</Text>
+              <Text style={styles.countryName}>{location?.country}</Text>
             </View>
-          ) : null}
-        </View>
 
-        {/*Forecast Section*/}
-        <View style={styles.forecastContainer}>
-          <View style={styles.locationContainer}>
-            <Text style={styles.cityName}>{weather?.name},</Text>
-            <Text style={styles.countryName}>{weather?.country}</Text>
-          </View>
-
-          {/*Weather Image*/}
-          <View style={styles.weatherImageContainer}>
-            <Image
-              source={require("../assets/images/partlycloudy.png")}
-              style={styles.weatherImage}
-            />
-          </View>
-
-          {/*Degree Celsius*/}
-          <View style={styles.temperatureContainer}>
-            <Text style={styles.temperature}>{weather?.temperature}°</Text>
-            <Text style={styles.weatherCondition}>{weather?.condition}</Text>
-          </View>
-
-          {/*Other Stats*/}
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
+            {/*Weather Image*/}
+            <View style={styles.weatherImageContainer}>
               <Image
-                source={require("../assets/icons/wind.png")}
-                style={styles.statIcon}
+                source={
+                  weatherImages[current?.condition?.text] ||
+                  weatherImages["other"]
+                }
+                style={styles.weatherImage}
               />
-              <Text style={styles.statText}>22km</Text>
             </View>
 
-            <View style={styles.statItem}>
-              <Image
-                source={require("../assets/icons/drop.png")}
-                style={styles.statIcon}
-              />
-              <Text style={styles.statText}>23%</Text>
+            {/*Degree Celsius*/}
+            <View style={styles.temperatureContainer}>
+              <Text style={styles.temperature}>
+                {Math.round(current?.temp_c) || 23}°
+              </Text>
+              <Text style={styles.weatherCondition}>
+                {current?.condition?.text || "Partly Cloudy"}
+              </Text>
             </View>
 
-            <View style={styles.statItem}>
-              <Image
-                source={require("../assets/icons/sun.png")}
-                style={styles.statIcon}
-              />
-              <Text style={styles.statText}>6:05 AM</Text>
+            {/*Other Stats*/}
+            <View style={styles.statsContainer}>
+              <View style={styles.statItem}>
+                <Image
+                  source={require("../assets/icons/wind.png")}
+                  style={styles.statIcon}
+                />
+                <Text style={styles.statText}>{current?.wind_kph}km</Text>
+              </View>
+
+              <View style={styles.statItem}>
+                <Image
+                  source={require("../assets/icons/drop.png")}
+                  style={styles.statIcon}
+                />
+                <Text style={styles.statText}>{current?.humidity}%</Text>
+              </View>
+
+              <View style={styles.statItem}>
+                <Image
+                  source={require("../assets/icons/sun.png")}
+                  style={styles.statIcon}
+                />
+                <Text style={styles.statText}>
+                  {weather?.forecast?.forecastday?.[0]?.astro?.sunrise ||
+                    "6:05 AM"}
+                </Text>
+              </View>
+            </View>
+
+            {/*Forecast Section for the next days*/}
+            <View style={styles.dailyForecastContainer}>
+              <View style={styles.forecastHeader}>
+                <CalendarDaysIcon size="22" color="white" />
+                <Text style={styles.forecastHeaderText}>Daily Forecast</Text>
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.scrollViewContent}
+              >
+                {weather?.forecast?.forecastday?.map((item, index) => {
+                  const date = new Date(item.date);
+                  const dayName = date.toLocaleDateString("en-US", {
+                    weekday: "short",
+                  });
+
+                  return (
+                    <View
+                      key={index}
+                      style={[
+                        styles.forecastCard,
+                        { backgroundColor: theme.bgwhite(0.15) },
+                      ]}
+                    >
+                      <Image
+                        source={
+                          weatherImages[item?.day?.condition?.text] ||
+                          weatherImages["other"]
+                        }
+                        style={styles.forecastIcon}
+                      />
+                      <Text style={styles.dayText}>{dayName}</Text>
+                      <Text style={styles.tempText}>
+                        {Math.round(item?.day?.avgtemp_c)}°
+                      </Text>
+                    </View>
+                  );
+                })}
+              </ScrollView>
             </View>
           </View>
-
-          {/*Forecast Section for the next days*/}
-          <View style={styles.dailyForecastContainer}>
-            <View style={styles.forecastHeader}>
-              <CalendarDaysIcon size="22" color="white" />
-              <Text style={styles.forecastHeaderText}>Daily Forecast</Text>
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.scrollViewContent}
-            >
-              <View
-                style={[
-                  styles.forecastCard,
-                  { backgroundColor: theme.bgwhite(0.15) },
-                ]}
-              >
-                <Image
-                  source={require("../assets/images/heavyrain.png")}
-                  style={styles.forecastIcon}
-                />
-                <Text style={styles.dayText}>Monday</Text>
-                <Text style={styles.tempText}>13°</Text>
-              </View>
-              <View
-                style={[
-                  styles.forecastCard,
-                  { backgroundColor: theme.bgwhite(0.15) },
-                ]}
-              >
-                <Image
-                  source={require("../assets/images/heavyrain.png")}
-                  style={styles.forecastIcon}
-                />
-                <Text style={styles.dayText}>Tuesday</Text>
-                <Text style={styles.tempText}>13°</Text>
-              </View>
-              <View
-                style={[
-                  styles.forecastCard,
-                  { backgroundColor: theme.bgwhite(0.15) },
-                ]}
-              >
-                <Image
-                  source={require("../assets/images/heavyrain.png")}
-                  style={styles.forecastIcon}
-                />
-                <Text style={styles.dayText}>Wednesday</Text>
-                <Text style={styles.tempText}>13°</Text>
-              </View>
-              <View
-                style={[
-                  styles.forecastCard,
-                  { backgroundColor: theme.bgwhite(0.15) },
-                ]}
-              >
-                <Image
-                  source={require("../assets/images/heavyrain.png")}
-                  style={styles.forecastIcon}
-                />
-                <Text style={styles.dayText}>Thursday</Text>
-                <Text style={styles.tempText}>13°</Text>
-              </View>
-              <View
-                style={[
-                  styles.forecastCard,
-                  { backgroundColor: theme.bgwhite(0.15) },
-                ]}
-              >
-                <Image
-                  source={require("../assets/images/heavyrain.png")}
-                  style={styles.forecastIcon}
-                />
-                <Text style={styles.dayText}>Friday</Text>
-                <Text style={styles.tempText}>13°</Text>
-              </View>
-              <View
-                style={[
-                  styles.forecastCard,
-                  { backgroundColor: theme.bgwhite(0.15) },
-                ]}
-              >
-                <Image
-                  source={require("../assets/images/heavyrain.png")}
-                  style={styles.forecastIcon}
-                />
-                <Text style={styles.dayText}>Saturday</Text>
-                <Text style={styles.tempText}>13°</Text>
-              </View>
-              <View
-                style={[
-                  styles.forecastCard,
-                  { backgroundColor: theme.bgwhite(0.15) },
-                ]}
-              >
-                <Image
-                  source={require("../assets/images/heavyrain.png")}
-                  style={styles.forecastIcon}
-                />
-                <Text style={styles.dayText}>Sunday</Text>
-                <Text style={styles.tempText}>13°</Text>
-              </View>
-            </ScrollView>
-          </View>
-        </View>
-      </SafeAreaView>
+        </SafeAreaView>
+      )}
     </View>
   );
 }
@@ -313,6 +274,11 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   searchContainer: {
     height: "8%",
@@ -426,17 +392,21 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     flexDirection: "row",
-    justifyContent: "space-around", // Changed from space-between to space-around
-    marginHorizontal: 32, // Increased margin for better spacing
-    paddingHorizontal: 16,
+    justifyContent: "space-between", // Changed back to space-between for even distribution
+    alignItems: "center",
+    marginHorizontal: 16, // Reduced margin
+    paddingHorizontal: 24, // Increased padding for better spacing
+    marginVertical: 8,
   },
   statItem: {
     flexDirection: "row",
     alignItems: "center",
+    flex: 1,
+    justifyContent: "center",
   },
   statIcon: {
-    width: 24, // w-6 equivalent (6 * 4 = 24px)
-    height: 24, // h-6 equivalent
+    width: 24,
+    height: 24,
     marginRight: 8,
   },
   statText: {
