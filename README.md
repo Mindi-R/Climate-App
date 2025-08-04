@@ -186,13 +186,6 @@ The app uses React Native StyleSheet for styling with:
   <img src="screenshots/forecast-view.png" alt="7-Day Forecast" width="300"/>
 </div>
 
-
-> **Note**: To add your actual screenshots:
-> 1. Take screenshots of your app running on a device/simulator
-> 2. Save them in the `screenshots/` folder
-> 3. Name them descriptively (e.g., `home-screen.png`, `search-dropdown.png`)
-> 4. Replace the placeholder names above with your actual screenshot filenames
-
 ## 🔄 API Integration
 
 ### Weather API Endpoints Used
@@ -231,24 +224,6 @@ expo build:ios
 ```bash
 expo build:android
 ```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Commit changes: `git commit -am 'Add feature'`
-4. Push to branch: `git push origin feature-name`
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 📞 Support
-
-For support or questions:
-- Create an issue in the [GitHub repository](https://github.com/Mindi-R/Climate-App/issues)
-- Check existing issues for solutions
 
 ## 🔗 Links
 
